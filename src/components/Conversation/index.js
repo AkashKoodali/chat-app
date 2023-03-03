@@ -12,7 +12,7 @@ function Conversation() {
 
       {/* Msg */}
       <Box width={"100%"} sx={{ flexGrow: 1, height: "100%", overflow:"scroll" }}>
-        <Message />
+        <Message menu={true} />
       </Box>
 
       {/* chat footer */}
