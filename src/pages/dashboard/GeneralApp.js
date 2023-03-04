@@ -3,11 +3,13 @@ import React from "react";
 import { useSelector } from "react-redux";
 import Contact from "../../components/Contact";
 import Conversation from "../../components/Conversation";
+import SharedMessages from "../../components/SharedMessages";
+import StarredMessages from "../../components/StarredMessages";
 import Chats from "./Chats";
 
 const GeneralApp = () => {
   const theme = useTheme();
-  const { sidebar } = useSelector((store) => store.app);
+  const  sidebar  = useSelector((store) => store.app.sidebar);
   return (
     <>
       <Stack direction="row" sx={{ width: "100%" }}>
@@ -29,7 +31,23 @@ const GeneralApp = () => {
         </Box>
 
         {/* contact */}
-        {sidebar.open && <Contact />}
+        {sidebar.open &&
+          (() => {
+            switch (sidebar.type) {
+              case "CONTACT":
+                return <Contact />;
+
+              case "STARRED":
+                 return <StarredMessages />
+
+              case "SHARED":
+                return <SharedMessages />;
+                // return <Media />;
+
+              default:
+                break;
+            }
+          })()}
       </Stack>
     </>
   );
