@@ -5,6 +5,7 @@ const crypto = require("crypto");
 //
 const User = require("../models/users");
 const filterObj = require("../utils/filterObject");
+const mailService = require("../services/mailer")
 const { promisify } = require("util");
 
 //
@@ -71,6 +72,13 @@ exports.sendOTP = async (req, res, next) => {
   });
 
   //   TODO send mail
+  mailService.sendEmail({
+    from: "akashkoodali9@gmail.com",
+    to: "akashmohanan777@gmail.com",
+    subject: "OTP for Tank",
+    text: `Your OTP is ${new_otp}. This is valid for 10 min.`
+  })
+
   res.status(200).json({
     status: "success",
     message: "OTP Send Successfully",
