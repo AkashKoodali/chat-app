@@ -1,12 +1,13 @@
 const jwt = require("jsonwebtoken");
 const otpGenerator = require("otp-generator");
 const crypto = require("crypto");
+const { promisify } = require("util");
 
 //
 const User = require("../models/users");
 const filterObj = require("../utils/filterObject");
 const mailService = require("../services/mailer")
-const { promisify } = require("util");
+const otp = require("../Templates/otp");
 
 //
 const signToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET);
@@ -48,11 +49,6 @@ exports.register = async (req, res, next) => {
 
     next();
   }
-
-  res.status(200).json({
-    status: "success",
-    message: "Logged in successfully",
-  });
 };
 
 //
@@ -66,17 +62,25 @@ exports.sendOTP = async (req, res, next) => {
 
   const otp_expiry_time = Date.now() + 10 * 60 * 1000; // 10 min after otp sent
 
-  await User.findByIdAndUpdate(userId, {
+  const user = await User.findByIdAndUpdate(userId, {
     otp: new_otp,
     otp_expiry_time,
   });
 
-  //   TODO send mail
+  user.otp = new_otp.toString();
+
+  await user.save({ new: true, validateModifiedOnly: true });
+
+  console.log(new_otp);
+
+  //  <= TODO send mail =>
   mailService.sendEmail({
     from: "akashkoodali9@gmail.com",
-    to: "akashmohanan777@gmail.com",
+    to: user.email,
     subject: "OTP for Tank",
-    text: `Your OTP is ${new_otp}. This is valid for 10 min.`
+    html: otp(user.firstName, new_otp),
+    // text: `Your OTP is ${new_otp}. This is valid for 10 min.`,
+    attachments: []
   })
 
   res.status(200).json({
@@ -132,21 +136,24 @@ exports.login = async (req, res, next) => {
       status: "error",
       message: "Both email and password are required.",
     });
+    return;
   }
-  const userDoc = await Doc.findOne({ email: email }).select("+password");
+  const user = await User.findOne({ email: email }).select("+password");
 
-  if (!userDoc || !(await User.correctPassword(password, userDoc.password))) {
+  if (!user || !(await user.correctPassword(password, user.password))) {
     res
       .status(400)
       .json({ status: "error", message: "Email or password is incorrect" });
+      return;
   }
 
-  const token = signToken(userDoc._id);
+  const token = signToken(user._id);
 
   res.status(200).json({
     status: "success",
     message: "Logged in successfully",
     token,
+    user_id: user._id
   });
 };
 
@@ -209,10 +216,13 @@ exports.forgotPassword = async (req, res, next) => {
 
   // 2> generate the random reset token
   const resetToken = user.createPasswordResetToken();
-
-  const resetURL = `https://tawk.com/auth/reset-password/?code=${resetToken}`;
+  await user.save({ validateBeforeSave: false });
 
   try {
+    const resetURL = `https://tawk.com/auth/reset-password/?code=${resetToken}`;
+
+  console.log(resetToken);
+
     // TODO => send Email with reset URL
     res.status(200).json({
       status: "success",
@@ -234,45 +244,37 @@ exports.forgotPassword = async (req, res, next) => {
 
 // Reset Password
 exports.resetPassword = async (req, res, next) => {
-  // 1> get user based on the token
-
-  const hashToken = crypto
+  // 1) Get user based on the token
+  const hashedToken = crypto
     .createHash("sha256")
-    .update(req.params.token)
+    .update(req.body.token)
     .digest("hex");
 
   const user = await User.findOne({
-    passwordResetToken: hashToken,
-    passwordResetExpires: { $gt: Date.now() }, // compares passwordResetExpires time greater than current time
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
   });
 
-  // 2> if token has expired or submission is out of time window
-
+  // 2) If token has not expired, and there is user, set the new password
   if (!user) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
-      message: "Token is invalid or expired.",
+      message: "Token is Invalid or Expired",
     });
   }
-
-  // 3> update users password and set resetToken & expiry to undefined
-
-  user.password = req.body.password;
+  user.password = req.body.password;  
   user.passwordConfirm = req.body.passwordConfirm;
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
-
   await user.save();
 
-  // 4> Log in the user and send new JWT
-
-  // TODO => send an email to user informing about password.
-
+  // 3) Update changedPasswordAt property for the user
+  // 4) Log the user in, send JWT
   const token = signToken(user._id);
 
   res.status(200).json({
     status: "success",
-    message: "Password reseted successfully.",
+    message: "Password Reseted Successfully",
     token,
   });
 };

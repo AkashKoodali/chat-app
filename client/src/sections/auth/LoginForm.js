@@ -17,13 +17,13 @@ import {
 // components
 import FormProvider, { RHFTextField } from "../../components/hook-form";
 import { Eye, EyeSlash } from "phosphor-react";
-// import { LoginUser } from "../../redux/slices/auth";
-// import { useDispatch, useSelector } from "react-redux";
+import { LoginUser } from "../../redux/slices/auth";
+import { useDispatch } from "react-redux";
 
 // ----------------------------------------------------------------------
 
 export default function AuthLoginForm() {
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
 
   // const {isLoading} = useSelector((state) => state.auth);
@@ -56,7 +56,7 @@ export default function AuthLoginForm() {
     try {
       console.log(data);
       // submit data to backend
-      // dispatch(LoginUser(data));
+      dispatch(LoginUser(data));
     } catch (error) {
       console.error(error);
       reset();
