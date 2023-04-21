@@ -22,8 +22,8 @@ import {
 
 import { useTheme } from "@mui/material/styles";
 import { faker } from "@faker-js/faker";
-import ThemeDialog from "../../sections/settings/ThemeDialog";
-import ShortcutDialog from "../../sections/settings/Shortcuts";
+import ThemeDialog from "../../../sections/Dashboard/settings/ThemeDialog";
+import ShortcutDialog from "../../../sections/Dashboard/settings/Shortcuts";
 
 const Settings = () => {
   const theme = useTheme();
@@ -105,7 +105,7 @@ const Settings = () => {
         <Box
           sx={{
             overflowY: "scroll",
-     
+
             height: "100vh",
             width: 320,
             backgroundColor:
@@ -116,7 +116,6 @@ const Settings = () => {
             boxShadow: "0px 0px 2px rgba(0, 0, 0, 0.25)",
           }}
         >
-          
           <Stack p={4} spacing={5}>
             {/* Header */}
             <Stack direction="row" alignItems={"center"} spacing={3}>
@@ -176,8 +175,12 @@ const Settings = () => {
       {openTheme && (
         <ThemeDialog open={openTheme} handleClose={handleCloseTheme} />
       )}
-      {openShortcuts && <ShortcutDialog open={openShortcuts} handleClose={handleCloseShortcuts} /> }
-      
+      {openShortcuts && (
+        <ShortcutDialog
+          open={openShortcuts}
+          handleClose={handleCloseShortcuts}
+        />
+      )}
     </>
   );
 };

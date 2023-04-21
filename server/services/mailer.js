@@ -1,44 +1,39 @@
 const sgMail = require("@sendgrid/mail");
 
-const dotenv = require("dotenv");
-
-dotenv.config({ path: "../config.env" });
+console.log(process.env.SG_KEY);
 
 sgMail.setApiKey(process.env.SG_KEY);
 
 const sendSGMail = async ({
-    recipient,
-    sender,
-    subject,
-    html,
-    text,
-    attachments,
+  to,
+  subject,
+  html,
+  attachments,
+  text,
 }) => {
-    try {
-        
-        const from = sender || "contact@gmail.com";
+  try {
+    const from = "akashkoodali9@gmail.com";
 
-        const msg = {
-            to: recipient, // email recipient
-            from: from, // this will be our verified sender
-            subject,
-            html: content,
-            text: text,
-            attachments,
-        }
+    const msg = {
+      to: to, // Change to your recipient
+      from: from, // Change to your verified sender
+      subject: subject,
+      html: html,
+      text: text,
+      attachments,
+    };
 
-        return sgMail.send(msg);
-
-    } catch (error) {
-        console.log(error);
-    }
-}
+    
+    return sgMail.send(msg);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 exports.sendEmail = async (args) => {
-    if(process.env.NODE_ENV === "development") {
-        return new Promise.resolve();
-    }
-    else {
-        return sendSGMail(args);
-    }
-}
+  if (!process.env.NODE_ENV === "development") {
+    return Promise.resolve();
+  } else {
+    return sendSGMail(args);
+  }
+};
